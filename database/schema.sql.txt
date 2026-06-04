@@ -1,0 +1,42 @@
+CREATE TYPE contract_status AS ENUM (
+    'DRAFT',
+    'REVIEW',
+    'APPROVED',
+    'REJECTED'
+);
+
+
+CREATE TABLE contracts (
+    id UUID PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    status contract_status NOT NULL,
+    owner_name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE workflow_history (
+    id UUID PRIMARY KEY,
+    contract_id UUID NOT NULL,
+    previous_status contract_status,
+    new_status contract_status,
+    changed_by VARCHAR(100),
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_contract
+    FOREIGN KEY (contract_id)
+    REFERENCES contracts(id)
+    ON DELETE CASCADE
+);
+
+
+CREATE INDEX idx_contract_status
+ON contracts(status);
+
+CREATE INDEX idx_contract_owner
+ON contracts(owner_name);
+
+CREATE INDEX idx_workflow_contract
+ON workflow_history(contract_id);
