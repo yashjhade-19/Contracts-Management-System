@@ -1,9 +1,11 @@
 package com.yash.contractmanagement.controller;
 
-import com.yash.contractmanagement.entity.Contract;
+import com.yash.contractmanagement.dto.ContractRequestDto;
+import com.yash.contractmanagement.dto.ContractResponseDto;
+import com.yash.contractmanagement.dto.WorkflowHistoryResponseDto;
 import com.yash.contractmanagement.entity.ContractStatus;
-import com.yash.contractmanagement.entity.WorkflowHistory;
 import com.yash.contractmanagement.service.ContractService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +21,7 @@ public class ContractController {
     private ContractService contractService;
 
     @GetMapping
-    public Page<Contract> getContracts(
+    public Page<ContractResponseDto> getContracts(
 
             @RequestParam(defaultValue = "0")
             int page,
@@ -43,7 +45,7 @@ public class ContractController {
     }
 
     @GetMapping("/{id}")
-    public Contract getContractById(
+    public ContractResponseDto getContractById(
             @PathVariable UUID id
     ) {
 
@@ -51,7 +53,7 @@ public class ContractController {
     }
 
     @GetMapping("/{id}/history")
-    public List<WorkflowHistory> getWorkflowHistory(
+    public List<WorkflowHistoryResponseDto> getWorkflowHistory(
             @PathVariable UUID id
     ) {
 
@@ -59,11 +61,11 @@ public class ContractController {
     }
 
     @PostMapping
-    public Contract createContract(
-            @RequestBody Contract contract
-    ){
+    public ContractResponseDto createContract(
+            @Valid
+            @RequestBody ContractRequestDto dto
+    ) {
 
-        return contractService
-                .createContract(contract);
+        return contractService.createContract(dto);
     }
 }

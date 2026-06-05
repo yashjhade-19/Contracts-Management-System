@@ -1,14 +1,15 @@
 package com.yash.contractmanagement.service;
 
+import com.yash.contractmanagement.dto.ContractRequestDto;
+import com.yash.contractmanagement.dto.ContractResponseDto;
+import com.yash.contractmanagement.dto.WorkflowHistoryResponseDto;
 import com.yash.contractmanagement.entity.Contract;
 import com.yash.contractmanagement.entity.ContractStatus;
 import com.yash.contractmanagement.entity.WorkflowHistory;
 import com.yash.contractmanagement.repository.ContractRepository;
 import com.yash.contractmanagement.repository.WorkflowHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -24,7 +25,7 @@ public class ContractService {
     @Autowired
     private WorkflowHistoryRepository workflowHistoryRepository;
 
-    public Page<Contract> getContracts(
+    public Page<ContractResponseDto> getContracts(
             int page,
             int size,
             String search,
@@ -34,55 +35,109 @@ public class ContractService {
         Pageable pageable =
                 PageRequest.of(page, size);
 
+        Page<Contract> contracts;
+
         if (status != null) {
-            return contractRepository
-                    .findByStatus(status, pageable);
-        }
 
-        if (search != null && !search.isBlank()) {
-
-            return contractRepository
-                    .findByTitleContainingIgnoreCaseOrOwnerNameContainingIgnoreCase(
-                            search,
-                            search,
+            contracts =
+                    contractRepository.findByStatus(
+                            status,
                             pageable
                     );
+
+        } else if (search != null && !search.isBlank()) {
+
+            contracts =
+                    contractRepository
+                            .findByTitleContainingIgnoreCaseOrOwnerNameContainingIgnoreCase(
+                                    search,
+                                    search,
+                                    pageable
+                            );
+
+        } else {
+
+            contracts =
+                    contractRepository.findAll(pageable);
         }
 
-        return contractRepository.findAll(pageable);
+        return contracts.map(this::convertToResponseDto);
     }
 
-    public Contract getContractById(UUID id) {
+    public ContractResponseDto getContractById(UUID id) {
 
-        return contractRepository
-                .findById(id)
-                .orElseThrow(
-                        () -> new RuntimeException(
-                                "Contract not found"
-                        )
-                );
+        Contract contract =
+                contractRepository
+                        .findById(id)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "Contract not found"
+                                )
+                        );
+
+        return convertToResponseDto(contract);
     }
 
-    public List<WorkflowHistory> getWorkflowHistory(UUID contractId) {
+    public List<WorkflowHistoryResponseDto> getWorkflowHistory(
+            UUID contractId
+    ) {
 
         return workflowHistoryRepository
-                .findByContractId(contractId);
+                .findByContractId(contractId)
+                .stream()
+                .map(this::convertToHistoryDto)
+                .toList();
     }
 
-    public Contract createContract(
+    public ContractResponseDto createContract(
+            ContractRequestDto dto
+    ) {
+
+        Contract contract =
+                Contract.builder()
+                        .id(UUID.randomUUID())
+                        .title(dto.getTitle())
+                        .description(dto.getDescription())
+                        .status(dto.getStatus())
+                        .ownerName(dto.getOwnerName())
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build();
+
+        contract =
+                contractRepository.save(contract);
+
+        return convertToResponseDto(contract);
+    }
+
+    private ContractResponseDto convertToResponseDto(
             Contract contract
-    ){
+    ) {
 
-        contract.setId(UUID.randomUUID());
+        return ContractResponseDto.builder()
+                .id(contract.getId())
+                .title(contract.getTitle())
+                .description(contract.getDescription())
+                .status(contract.getStatus())
+                .ownerName(contract.getOwnerName())
+                .createdAt(contract.getCreatedAt())
+                .updatedAt(contract.getUpdatedAt())
+                .build();
+    }
 
-        contract.setCreatedAt(
-                LocalDateTime.now()
-        );
+    private WorkflowHistoryResponseDto convertToHistoryDto(
+            WorkflowHistory history
+    ) {
 
-        contract.setUpdatedAt(
-                LocalDateTime.now()
-        );
-
-        return contractRepository.save(contract);
+        return WorkflowHistoryResponseDto.builder()
+                .id(history.getId())
+                .previousStatus(history.getPreviousStatus())
+                .newStatus(history.getNewStatus())
+                .changedBy(history.getChangedBy())
+                .changedAt(history.getChangedAt())
+                .contractId(
+                        history.getContract().getId()
+                )
+                .build();
     }
 }

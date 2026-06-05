@@ -1,5 +1,6 @@
 package com.yash.contractmanagement.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,6 +21,7 @@ public class WorkflowHistory {
 
     @ManyToOne
     @JoinColumn(name = "contract_id")
+    @JsonIgnore
     private Contract contract;
 
     @Enumerated(EnumType.STRING)
