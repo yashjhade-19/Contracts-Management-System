@@ -1,6 +1,6 @@
-# Contract Management System
+# Contracts Management System
 
-A full-stack Contract Management System developed as part of the Seventh Ray Consulting and Technology Private Limited assignment.
+A full-stack Contracts Management System developed as part of the Seventh Ray Consulting and Technology Private Limited assignment.
 
 ## Features
 
